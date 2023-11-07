@@ -1,0 +1,100 @@
+<html>
+
+   <head>
+      <title>Flask Weather Forecasting</title>
+   </head>
+
+   <body>
+      <form action = "/search-location" method = "POST">
+         <p><h1>Search Location:</h1></p>
+         <p><input type = 'text' name = 'location' value="{{location}}"/></p>
+         <p><input type = 'submit' value = 'Search'/></p>
+      </form>
+
+      {% if message %}
+      <div>{{message}}</div>
+      {% endif %}
+
+         {% if list %}
+         <form action = "/forecast" method = "POST">
+            <fieldset>
+               <legend>Select a location:</legend>
+               {% for item in list %}
+                    <div>
+                      <input type="radio" id="{{item.place_id}}" name="coordinates" value="{{ item.lat ~ ';' ~ item.lon }}" />
+                      <label>{{item.display_name}}</label>
+                    </div>
+               {% endfor %}
+               <input type="hidden" name="hlocation" value="{{location}}" />
+               <p><input type = 'submit' value = 'Get your weather forecast!'/></p>
+            </fieldset>
+
+         </form>
+         {% endif %}
+
+         {% if weather %}
+            <h2>Current weather conditions</h2>
+            <div>Air temperature: {{weather.current.temperature_2m ~ ' ' ~ weather.current_units.temperature_2m}}</div>
+            <div>Relative Humidity: {{weather.current.relativehumidity_2m ~ ' ' ~ weather.current_units.relativehumidity_2m}}</div>
+            <div>Apparent Temperature: {{weather.current.apparent_temperature ~ ' ' ~ weather.current_units.apparent_temperature}}</div>
+            <div>Wind Speed (10m above ground): {{weather.current.windspeed_10m ~ ' ' ~ weather.current_units.windspeed_10m}}</div>
+
+            <div>
+               <h2>Weather Forecast (7 days)</h2>
+               <canvas id="forecastTemperatureChart" style="max-width: 500px; max-height: 500px"></canvas><br/>
+               <canvas id="relativeHumidityChart" style="max-width: 500px; max-height: 500px"></canvas>
+            </div>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.2.0/chart.umd.js"></script>
+            <script>
+               const ctx = document.getElementById('forecastTemperatureChart').getContext('2d');
+
+               const forecastTemperatureChart = new Chart(ctx, {
+                  type: 'bar',
+                  data: {
+                      labels: {{ weather.hourly.time | safe }},
+                      datasets: [{
+                          label: 'Air Temperature ({{ weather.hourly_units.temperature_2m }})',
+                          data: {{ weather.hourly.temperature_2m | safe }}, // Data on Y axis
+                          borderWidth: 1,
+                          backgroundColor: "rgb(205, 92, 92)",
+                          borderColor: "rgb(205, 92, 92)",
+                      }]
+                  },
+
+                  options: {
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Air temperature forecast for the next 7 days (hourly)'
+                        }
+                    }
+                  }
+               });
+
+               const ctx2 = document.getElementById('relativeHumidityChart').getContext('2d');
+               const relativeHumidityChart = new Chart(ctx2, {
+                  type: 'bar',
+                  data: {
+                      labels: {{ weather.hourly.time | safe }},
+                      datasets: [{
+                          label: 'Relative Humidity ({{ weather.hourly_units.relativehumidity_2m }})',
+                          data: {{ weather.hourly.relativehumidity_2m | safe }}, // Data on Y axis
+                          borderWidth: 1,
+                      }]
+                  },
+                  options: {
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Relative humidity forecast for the next 7 days (hourly)'
+                        }
+                    }
+                  }
+               });
+
+               </script>
+         {% endif %}
+
+   </body>
+
+</html>
